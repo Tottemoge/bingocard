@@ -1,1 +1,94 @@
 # bingocard
+import tkinter as tk
+import random
+import tkinter.messagebox
+
+class BingoCard:
+    def __init__(self):
+        self.window = tk.Tk()
+        self.window.title("ビンゴカード生成システム")
+        self.card = [[None for _ in range(5)] for _ in range(5)]
+        self.buttons = [[None for _ in range(5)] for _ in range(5)]
+        self.selected = [[False for _ in range(5)] for _ in range(5)]
+        self.numbers = self.generate_card_numbers()
+        self.create_card()
+
+    def generate_card_numbers(self):
+        card_numbers = []
+        # 各列に指定された数字範囲を割り当てる
+        for col, start in enumerate(range(1, 76, 15)):
+            col_range = range(start, start + 15)
+            numbers = random.sample(col_range, 5)
+            card_numbers.append(numbers)
+        card_numbers[2][2] = "FREE"  # 真ん中は"FREE"
+        return card_numbers
+
+    def create_card(self):
+        for i in range(5):
+            for j in range(5):
+                num = self.numbers[j][i]  # 縦（列）ごとの数字を割り当て
+                button = tk.Button(self.window, text=str(num), width=8, height=4,
+                                   command=lambda i=i, j=j: self.select_number(i, j))
+                button.grid(row=i, column=j)
+                self.buttons[i][j] = button
+        self.buttons[2][2].config(state="disabled")  # FREEマスは選択不可
+
+    def select_number(self, i, j):
+        if not self.selected[i][j]:
+            self.buttons[i][j].config(bg="green")
+            self.selected[i][j] = True
+        else:
+            self.buttons[i][j].config(bg="SystemButtonFace")
+            self.selected[i][j] = False
+        self.check_bingo()
+
+    def check_bingo(self):
+        if self.check_rows() or self.check_columns() or self.check_diagonals():
+            tk.messagebox.showinfo("ビンゴ！", "ビンゴ達成！")
+        elif self.check_reach():
+            tk.messagebox.showinfo("リーチ！", "リーチ！")
+
+    def check_rows(self):
+        for row in self.selected:
+            if all(row):
+                return True
+        return False
+
+    def check_columns(self):
+        for col in range(5):
+            if all(self.selected[row][col] for row in range(5)):
+                return True
+        return False
+
+    def check_diagonals(self):
+        if all(self.selected[i][i] for i in range(5)):
+            return True
+        if all(self.selected[i][4 - i] for i in range(5)):
+            return True
+        return False
+
+    def check_reach(self):
+        # 行
+        for row in self.selected:
+            if row.count(True) == 4:
+                return True
+        # 列
+        for col in range(5):
+            if [self.selected[row][col] for row in range(5)].count(True) == 4:
+                return True
+        # 対角線
+        if [self.selected[i][i] for i in range(5)].count(True) == 4 or \
+           [self.selected[i][4 - i] for i in range(5)].count(True) == 4:
+            return True
+        return False
+
+    def run(self):
+        self.window.mainloop()
+
+if __name__ == "__main__":
+    bingo = BingoCard()
+    bingo.run()
+
+
+
+
